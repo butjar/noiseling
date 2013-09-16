@@ -1,0 +1,11 @@
+{application,streamling,
+             [{description,"Streamling"},
+              {vsn,"1"},
+              {registered,[]},
+              {applications,[kernel,stdlib,cowboy]},
+              {mod,{streamling_app,[]}},
+              {env,[]},
+              {modules,[home_handler,listen_handler,mochijson2,
+                        receive_handler,record_handler,stream_handler,
+                        stream_server,streaming_server,streamling,
+                        streamling_app,streamling_sup]}]}.

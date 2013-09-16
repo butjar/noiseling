@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+		<title>Zerg demo - spawned for each web request</title>
+		<meta name="keywords" content="Erlang, Xen, Erlang VM, zero-footprint cloud,
+		Ling, Erling, hypervisor, exokernel, operating system, cloud computing, elastic, system
+		software, scalable software, scalability, build service" />
+		<script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+		<script src="http://code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
+		<script src="/js/recorder.js"></script>
+		<script src="/js/recorderWorker.js"></script>
+		<script src="/js/streamer.js"></script>
+	</head>
+	<body>
+		<h1>Stream</h1>
+		<div width=100%>
+		<video id="video" width="0" height="0" autoplay style="visibility: hidden;" muted></video> 
+		<canvas id="canvas" width="320" height="240" style="display: inline;"></canvas>
+		</div>
+		<div width=100%><a href="/">BACK</a></div>
+	</body>
+</html>

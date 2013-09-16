@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+		<title>Zerg demo - spawned for each web request</title>
+		<meta name="keywords" content="Erlang, Xen, Erlang VM, zero-footprint cloud,
+		Ling, Erling, hypervisor, exokernel, operating system, cloud computing, elastic, system
+		software, scalable software, scalability, build service" />
+	</head>
+	<body>
+		<h1>Jukebox Home</h1>
+		<ul>
+			<li><a href="/listen">Listen</a></li>
+			<li><a href="/record">Record</a></li>
+		</ul>
+	</body>
+</html>

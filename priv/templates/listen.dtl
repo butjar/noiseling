@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+		<title>Zerg demo - spawned for each web request</title>
+		<meta name="keywords" content="Erlang, Xen, Erlang VM, zero-footprint cloud,
+		Ling, Erling, hypervisor, exokernel, operating system, cloud computing, elastic, system
+		software, scalable software, scalability, build service" />
+		<script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+		<script src="http://code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
+	</head>
+	<body>
+		<h1>Listner</h1>
+		<img id="target" style="display: inline;"/>
+		<div width=100%>
+			<canvas width="320" id="canvas" height="240" style="display: inline;"></canvas>
+			<audio id="audio" src="" controls autoplay></audio>
+		</div>
+		<div width=100%><a href="/">BACK</a></div>
+	</body>
+
+	<script type="text/javascript">
+		$(document).ready(function(){
+			window.AudioContext = window.AudioContext || window.webkitAudioContext;
+
+			var serverAddress = "141.64.162.226:8080";
+
+			var audioContext = new AudioContext();
+			var canvas = $("#canvas");
+	    	var ctx = canvas.get()[0].getContext('2d');
+
+	    	var webSockets = new WebSocket("ws://" + serverAddress + "/receive");
+
+	    	webSockets.onmessage = function (e) {
+	    		var reader = new FileReader();
+	    		reader.addEventListener("loadend", function() {
+    	 			var arraybuffer = reader.result;
+    	 			audioContext.decodeAudioData(arraybuffer, function(buffer) {
+						audiobuffer = buffer;
+						playSound(audiobuffer);
+					}, onDecodeAudioDataFailed);
+			 	});
+	    		reader.readAsArrayBuffer(e.data);
+			};
+
+			var playSound = function(buffer) {
+  				var source = audioContext.createBufferSource();
+  				source.buffer = buffer;
+  				source.connect(audioContext.destination);
+  				source.start(0);
+  			};
+
+			var onDecodeAudioDataFailed = function(e){
+				console.log("Error on decoding Audio Data:" + e);
+			};
+		});
+	</script>
+</html>
