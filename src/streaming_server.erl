@@ -21,7 +21,19 @@
 
 -define(SERVER, ?MODULE). 
 
--record(state, {}).
+-record(streamer, {
+            pid,
+            connected_listners = [],
+            stream_name,
+            lat,
+            long,
+            desc
+        }).
+
+-record(state, {
+            streamers = [],
+            listners = []
+        }).
 
 %%%===================================================================
 %%% API
@@ -55,7 +67,8 @@ start_link() ->
 %% @end
 %%--------------------------------------------------------------------
 init([]) ->
-    {ok, #state{}}.
+    State = #state{},
+    {ok, State}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -71,18 +84,55 @@ init([]) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_call({register_streamer, Pid}, From, State) ->
-    io:format("~nStreamer has been registered:[~p]~n",[Pid]),
+handle_call({start_streamer, StreamName, Lat, Long, Desc}, _From, State) ->
     StreamPid = spawn(fun() -> stream_data_loop() end),
-    global:register_name('stream', StreamPid),
-    io:format("~nStream started~n"),
-    {reply, ok, State};
-handle_call({register_listner, Pid}, From, State) ->
-    global:register_name(new_listner(Pid), Pid),
-    io:format("~nListner has been registered:[~p]~n",[Pid]),
-    {reply, ok, State}.
+    Streamer = #streamer{pid=StreamPid, stream_name=StreamName, lat=Lat, long=Long, desc=Desc},
+    NewState = State#state{streamers = State#state.streamers ++ [ Streamer ]},
+    {reply, {ok, {stream_pid, Streamer}}, NewState};
 
+handle_call({kill_streamer, StreamerPid}, _From, State) ->
+    NewStreamers = lists:keydelete(StreamerPid, 2, State#state.streamers),
+    NewState = State#state{streamers = NewStreamers},
+    StreamerPid ! shutdown,
+    {reply, ok, NewState};
 
+handle_call({add_listner, ListnerPid}, _From, State) ->
+    NewState = State#state{listners = State#state.listners ++ [ ListnerPid ]},
+    {reply, ok, NewState};
+
+handle_call({remove_listner, ListnerPid}, _From, State) ->
+    NewState = State#state{listners = State#state.listners -- [ ListnerPid ]},
+    {reply, ok, NewState};
+
+handle_call({connect_listner, StreamerPid, ListnerPid}, _From, State) ->
+    Streamer = lists:keyfind(StreamerPid, 2, State#state.streamers),
+    NewListners = Streamer#streamer.connected_listners ++ [ListnerPid],
+    NewStreamers = lists:keyreplace(StreamerPid, 2, State#state.streamers, Streamer#streamer{connected_listners=NewListners}),
+    NewState = State#state{streamers = NewStreamers},
+    {reply, ok, NewState};
+
+handle_call({disconnect_listner, StreamerPid, ListnerPid}, _From, State) ->
+    Streamer = lists:keyfind(StreamerPid, 2, State#state.streamers),
+    NewListners = Streamer#streamer.connected_listners -- [ListnerPid],
+    NewStreamers = lists:keyreplace(StreamerPid, 2, State#state.streamers, Streamer#streamer{connected_listners=NewListners}), 
+    NewState = State#state{streamers = NewStreamers},
+    {reply, ok, NewState};
+
+handle_call({get_connected_listners, StreamerPid}, _From, State) ->
+    case lists:keyfind(StreamerPid, 2, State#state.streamers) of
+        false ->
+            {reply, {ok, {listners, []}}, State};
+        Streamer ->
+            Listners = Streamer#streamer.connected_listners,
+            {reply, {ok, {listners, Listners}}, State}
+    end;
+handle_call({get_all_listners}, _From, State) ->
+    Listners = State#state.listners,
+    {reply, {ok, {listners, Listners}}, State};
+
+handle_call({get_streamers}, _From, State) ->
+    Streamers = State#state.streamers,
+    {reply, {ok, {streamers, Streamers}}, State}.
 %%--------------------------------------------------------------------
 %% @private
 %% @doc
@@ -137,28 +187,56 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
+send_data_to_listners(Data, Listners) ->
+    lists:foreach(fun(Pid)-> Pid ! Data end, Listners).
 
-send_to_connected_listners(Data) ->
-    lists:foreach(fun(Name)-> global:send(Name, Data) end, connected_listners()).
+get_connected_listners(StreamPid) ->
+    {ok, {listners, Listners}} = gen_server:call(?MODULE, {get_connected_listners, StreamPid}),
+    {ok, {connected_listners, Listners}}.
 
-connected_listners() ->
-    lists:filter(fun(Elem) -> 
-        case re:run(atom_to_list(Elem), "listner_*") of 
-            {match, _} -> true;
-            nomatch -> false
-        end
-    end, global:registered_names()).
+get_streamers() ->
+    {ok, {streamers, Streamers}} = gen_server:call(?MODULE, {get_streamers}),
+    {ok, {streamers, Streamers}}.
 
-register_streamer(Pid) -> gen_server:call(?MODULE, {register_streamer, Pid}).
+connect_listner(StreamPid, ListnerPid) -> 
+    ok = gen_server:call(?MODULE, {connect_listner, StreamPid, ListnerPid}),
+    ok.
 
-register_listner(Pid) -> gen_server:call(?MODULE, {register_listner, Pid}).
+disconnect_listner(StreamPid, ListnerPid) -> 
+    ok = gen_server:call(?MODULE, {disconnect_listner, StreamPid, ListnerPid}),
+    ok.
+
+start_streamer(Stream_name, Lat, Long, Desc) -> 
+    {ok, {stream_pid, Streamer}} = gen_server:call(?MODULE, {start_streamer, Stream_name, Lat, Long, Desc}),
+    {ok, {listners, Listners}} = gen_server:call(?MODULE, {get_all_listners}),
+    send_data_to_listners({streamer_added_event, Streamer}, Listners),
+    {ok, {stream_pid, Streamer}}.
+
+kill_streamer(StreamPid) -> 
+    ok = gen_server:call(?MODULE, {kill_streamer, StreamPid}),
+    {ok, {listners, Listners}} = gen_server:call(?MODULE, {get_all_listners}),
+    send_data_to_listners({streamer_removed_event, StreamPid}, Listners),
+    ok.
+
+add_listner(ListnerPid) -> 
+    ok = gen_server:call(?MODULE, {add_listner, ListnerPid}),
+    ok.
+
+remove_listner(ListnerPid) ->
+    ok = gen_server:call(?MODULE, {remove_listner, ListnerPid}),
+    ok.
 
 stream_data_loop() ->
     receive
-        Data ->
-            send_to_connected_listners(Data)
-    end,
-    stream_data_loop().
-
-new_listner(Pid) ->
-    list_to_atom(string:concat("listner_", pid_to_list(Pid))).
+        shutdown ->
+            exit(normal);
+        Chunk ->
+            {ok, {connected_listners, Listners}} = get_connected_listners(self()),
+            case Listners of
+                [] -> 
+                    stream_data_loop();
+                _Any -> 
+                    send_data_to_listners({audio_chunk, Chunk}, Listners),
+                    stream_data_loop()
+            end
+    end.

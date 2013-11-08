@@ -2,16 +2,20 @@
 <html>
 	<head>
 		<meta http-equiv="Content-type" content="text/html; charset=utf-8" />
-		<title>Zerg demo - spawned for each web request</title>
+		<title>NoiseCloud - Home</title>
 		<meta name="keywords" content="Erlang, Xen, Erlang VM, zero-footprint cloud,
 		Ling, Erling, hypervisor, exokernel, operating system, cloud computing, elastic, system
 		software, scalable software, scalability, build service" />
+		<script src="/js/jquery-1.10.1.min.js"></script>
+		<script src="/js/jquery-migrate-1.2.1.min.js"></script>
+		<link rel="stylesheet" href="/css/bootstrap.min.css">
 	</head>
 	<body>
-		<h1>Jukebox Home</h1>
-		<ul>
-			<li><a href="/listen">Listen</a></li>
-			<li><a href="/record">Record</a></li>
-		</ul>
+		<div class="jumbotron">
+  		<h1>Hello, welcome to NoiseCloud!</h1>
+  		<h2>Here you can see a list of streams and start listening</h2>
+  		<p><a class="btn btn-primary btn-lg" role="button" href="/listen">&nbsp;Listen streams&nbsp;</a></p>
+  		<h2>Here you can record and share your own streams</h2>
+  		<p><a class="btn btn-primary btn-lg" role="button" href="/record">Record a stream</a></p>
 	</body>
 </html>

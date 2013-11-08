@@ -7,9 +7,13 @@ init({tcp,http}, Req, []) ->
 	{ok, Req, undefined_state}.
 
 handle(Req, St) ->
+	{ok, [{addr, WsAddress}]} = inet:ifget("wlan0", [addr]),
+	{ok, WsAddressList} = ip4_address_to_binary(WsAddress),
 	erlydtl:compile("./priv/templates/home.dtl", home_template),
 
-	{ok,Body} = home_template:render(),
+	{ok,Body} = home_template:render([
+		{ws_address, WsAddressList}
+	]),
 
 	{ok,Reply} = cowboy_req:reply(200,[], Body, Req),
 
@@ -17,5 +21,17 @@ handle(Req, St) ->
 
 terminate(_What, _Req, _St) ->
 	ok.
+
+%% internal
+ip4_address_to_binary(Address)->
+	[H|T] = tuple_to_list(Address),
+	parse_address(T, integer_to_list(H)).
+
+parse_address([], List)->
+	{ok, List};
+parse_address(Address, List) ->
+	[H|T] = Address,
+	NewList = List ++ "." ++ integer_to_list(H),
+	parse_address(T, NewList).
 
 %%EOF

@@ -1,2 +1,2 @@
 #!/bin/sh
-erl -pa ../streamling/ebin ../streamling/deps/*/ebin -s streamling -sname client
+erl -pa ../webling/ebin ../webling/deps/*/ebin -s streamling -sname client
