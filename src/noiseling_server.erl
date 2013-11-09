@@ -11,13 +11,13 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/0]).
+-export([start_link/0, get_connected_listeners/1, get_streamers/0, 
+    connect_listener/2, disconnect_listener/2, start_streamer/4,
+     kill_streamer/1, add_listener/1, remove_listener/1]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
 	 terminate/2, code_change/3]).
-
--compile(export_all).
 
 -define(SERVER, ?MODULE). 
 
@@ -38,6 +38,41 @@
 %%%===================================================================
 %%% API
 %%%===================================================================
+get_connected_listeners(StreamPid) ->
+    {ok, {listeners, Listeners}} = gen_server:call(?MODULE, {get_connected_listeners, StreamPid}),
+    {ok, {connected_listeners, Listeners}}.
+
+get_streamers() ->
+    {ok, {streamers, Streamers}} = gen_server:call(?MODULE, {get_streamers}),
+    {ok, {streamers, Streamers}}.
+
+connect_listener(StreamPid, ListenerPid) -> 
+    ok = gen_server:call(?MODULE, {connect_listener, StreamPid, ListenerPid}),
+    ok.
+
+disconnect_listener(StreamPid, ListenerPid) ->
+    ok = gen_server:call(?MODULE, {disconnect_listener, StreamPid, ListenerPid}),
+    ok.
+
+start_streamer(Stream_name, Lat, Long, Desc) -> 
+    {ok, {streamer, Streamer}} = gen_server:call(?MODULE, {start_streamer, Stream_name, Lat, Long, Desc}),
+    {ok, {listeners, Listeners}} = gen_server:call(?MODULE, {get_all_listeners}),
+    send_data_to_listeners({streamer_added_event, Streamer}, Listeners),
+    {ok, {streamer, Streamer}}.
+
+kill_streamer(StreamPid) -> 
+    ok = gen_server:call(?MODULE, {kill_streamer, StreamPid}),
+    {ok, {listeners, Listeners}} = gen_server:call(?MODULE, {get_all_listeners}),
+    send_data_to_listeners({streamer_removed_event, StreamPid}, Listeners),
+    ok.
+
+add_listener(ListenerPid) -> 
+    ok = gen_server:call(?MODULE, {add_listener, ListenerPid}),
+    ok.
+
+remove_listener(ListenerPid) ->
+    ok = gen_server:call(?MODULE, {remove_listener, ListenerPid}),
+    ok.
 
 %%--------------------------------------------------------------------
 %% @doc
@@ -88,7 +123,7 @@ handle_call({start_streamer, StreamName, Lat, Long, Desc}, _From, State) ->
     StreamPid = spawn(fun() -> stream_data_loop() end),
     Streamer = #streamer{pid=StreamPid, stream_name=StreamName, lat=Lat, long=Long, desc=Desc},
     NewState = State#state{streamers = State#state.streamers ++ [ Streamer ]},
-    {reply, {ok, {stream_pid, Streamer}}, NewState};
+    {reply, {ok, {streamer, Streamer}}, NewState};
 
 handle_call({kill_streamer, StreamerPid}, _From, State) ->
     case lists:keyfind(StreamerPid, 2, State#state.streamers) of
@@ -197,42 +232,6 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 send_data_to_listeners(Data, Listeners) ->
     lists:foreach(fun(Pid)-> Pid ! Data end, Listeners).
-
-get_connected_listeners(StreamPid) ->
-    {ok, {listeners, Listeners}} = gen_server:call(?MODULE, {get_connected_listeners, StreamPid}),
-    {ok, {connected_listeners, Listeners}}.
-
-get_streamers() ->
-    {ok, {streamers, Streamers}} = gen_server:call(?MODULE, {get_streamers}),
-    {ok, {streamers, Streamers}}.
-
-connect_listener(StreamPid, ListenerPid) -> 
-    ok = gen_server:call(?MODULE, {connect_listener, StreamPid, ListenerPid}),
-    ok.
-
-disconnect_listener(StreamPid, ListenerPid) ->
-    ok = gen_server:call(?MODULE, {disconnect_listener, StreamPid, ListenerPid}),
-    ok.
-
-start_streamer(Stream_name, Lat, Long, Desc) -> 
-    {ok, {stream_pid, Streamer}} = gen_server:call(?MODULE, {start_streamer, Stream_name, Lat, Long, Desc}),
-    {ok, {listeners, Listeners}} = gen_server:call(?MODULE, {get_all_listeners}),
-    send_data_to_listeners({streamer_added_event, Streamer}, Listeners),
-    {ok, {stream_pid, Streamer}}.
-
-kill_streamer(StreamPid) -> 
-    ok = gen_server:call(?MODULE, {kill_streamer, StreamPid}),
-    {ok, {listeners, Listeners}} = gen_server:call(?MODULE, {get_all_listeners}),
-    send_data_to_listeners({streamer_removed_event, StreamPid}, Listeners),
-    ok.
-
-add_listener(ListenerPid) -> 
-    ok = gen_server:call(?MODULE, {add_listener, ListenerPid}),
-    ok.
-
-remove_listener(ListenerPid) ->
-    ok = gen_server:call(?MODULE, {remove_listener, ListenerPid}),
-    ok.
 
 stream_data_loop() ->
     receive

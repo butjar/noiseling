@@ -38,7 +38,7 @@ websocket_handle({text, Msg}, Req, State) ->
         	Lat = binary_to_list(proplists:get_value(<<"lat">>, StreamerIoList)),
         	Long = binary_to_list(proplists:get_value(<<"lon">>, StreamerIoList)),
         	Desc = binary_to_list(proplists:get_value(<<"desc">>, StreamerIoList)),
-    		{ok, {stream_pid, Streamer}} = noiseling_server:start_streamer(StreamName, Lat, Long, Desc),
+    		{ok, {streamer, Streamer}} = noiseling_server:start_streamer(StreamName, Lat, Long, Desc),
     		NewState = State#state{streamer = Streamer},
     		{reply, {text, <<"streamer_started">>}, Req, NewState}
     end;
