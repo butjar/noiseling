@@ -1,2 +1,2 @@
 #!/bin/sh
-erl -pa ../webling/ebin ../webling/deps/*/ebin -s streamling -sname client
+erl -pa ../noiseling/ebin ../noiseling/deps/*/ebin -s noiseling -network_device wlan0 -port 8080

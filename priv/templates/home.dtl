@@ -9,13 +9,17 @@
 		<script src="/js/jquery-1.10.1.min.js"></script>
 		<script src="/js/jquery-migrate-1.2.1.min.js"></script>
 		<link rel="stylesheet" href="/css/bootstrap.min.css">
+		<link rel="stylesheet" href="/css/home.css">
 	</head>
 	<body>
-		<div class="jumbotron">
-  		<h1>Hello, welcome to NoiseCloud!</h1>
-  		<h2>Here you can see a list of streams and start listening</h2>
-  		<p><a class="btn btn-primary btn-lg" role="button" href="/listen">&nbsp;Listen streams&nbsp;</a></p>
-  		<h2>Here you can record and share your own streams</h2>
-  		<p><a class="btn btn-primary btn-lg" role="button" href="/record">Record a stream</a></p>
+		<div class="container">
+			<div class="jumbotron" id="home_jumbo">
+		  		<h1>Hello, welcome to NoiseCloud!</h1>
+		  		<h2>Here you can see a list of streams and start listening</h2>
+		  		<p><a class="btn btn-primary btn-lg" role="button" href="/listen">&nbsp;Listen streams&nbsp;</a></p>
+		  		<h2>Here you can record and share your own streams</h2>
+		  		<p><a class="btn btn-primary btn-lg" role="button" href="/stream">Record a stream</a></p>
+		  	</div>
+	  	</div>
 	</body>
 </html>

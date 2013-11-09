@@ -27,32 +27,19 @@ var init = function() {
 };
 				
 var openWebsockets = function(callback){
-	webSockets = new WebSocket("ws://" + serverAddress + "/stream");
+	webSockets = new WebSocket("ws://" + serverAddress + "/record");
     webSockets.onopen = function() { callback };
     webSockets.onmessage = function(e) { handleWebSocketMessage(e.data) };
 	return webSockets;
 };
 
-var startWebRtcSession = function(){
-  	navigator.getUserMedia({video: false, audio: true}, function(localMediaStream) {
-    	mediaStreamSource = audioContext.createMediaStreamSource(localMediaStream);
-    	rec = new Recorder(mediaStreamSource);
-    	rec.record();
-	}, onGetUserMediaFailed);
-};
-
-// var stopWebRtcSession = function(){
-//     mediaStreamSource = null;
-//     rec.stop();
-// };
-
 var startStream = function(){
 	if(isValidForm()){
-		webSocketsSendForm();
 		disableFormAndButton();
 		$("#submit_streamer_btn").removeClass("btn-primary")
 							   	 .addClass("btn-danger")
 							   	 .text("stop streaming");
+		webSockets.send(getStreamerAsJsonString());
 	}
 };
 
@@ -61,9 +48,11 @@ var stopStream = function(){
 							 .addClass("btn-primary")
 							 .text("Start streaming");
 	disableFormAndButton();
+	webSockets.send("stop_streamer");
 }; 
 
 var onGetUserMediaFailed = function(e) {
+	stopStream();
 	alert("Your Browser doesn't support WebRTC");
 };
 
@@ -95,17 +84,26 @@ var handleWebSocketMessage = function(message){
 };
 
 var onStreamStarted = function(){
-	startWebRtcSession();
+  	navigator.getUserMedia({video: false, audio: true}, function(localMediaStream) {
+	mediaStreamSource = audioContext.createMediaStreamSource(localMediaStream);
 	streaming = true;
-	enableFormAndButton();
+	rec = new Recorder(mediaStreamSource);
+	rec.record();
+	enableButton();
+	}, onGetUserMediaFailed);
 };
 
 var onStreamStopped = function(){
 	streaming = false;
+	if(rec){
+    	rec.stop();
+    };
+    mediaStreamSource = null;
+	streaming = false;
 	enableFormAndButton();
 };
 
-var webSocketsSendForm = function(){
+var getStreamerAsJsonString = function(){
     var stream_name = $("#name_input").val();
     var lat = $("#lat_input").val();
     var lon = $("#long_input").val();
@@ -116,8 +114,7 @@ var webSocketsSendForm = function(){
     						lon: lon,
     						desc:desc
     				  }};
-    Msg = JSON.stringify(streamerObj, escapeJsonString);
-    ws.send(Msg);
+    return JSON.stringify(streamerObj, escapeJsonString);
 };
 
 var isValidForm = function(){
@@ -150,11 +147,18 @@ var isValidForm = function(){
 var enableFormAndButton = function(){
 	$("#streamer_input_fieldset").removeAttr('disabled');
 	$("#submit_streamer_btn").removeAttr('disabled');
+	$("#submit_streamer_btn").prop("disabled",false);;
 };
 
 var disableFormAndButton = function(){
 	$("#streamer_input_fieldset").attr('disabled','');
-	$("#submit_streamer_btn").attr(disabled="disabled");
+	$("#submit_streamer_btn").attr(disabled="disabled")
+	$("#submit_streamer_btn").prop("disabled",true);
+};
+
+var enableButton = function(){
+	$("#submit_streamer_btn").removeAttr('disabled');
+	$("#submit_streamer_btn").prop("disabled",false);;
 };
 	
 var escapeJsonString = function(key, val) {

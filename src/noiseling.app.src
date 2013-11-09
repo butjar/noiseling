@@ -1,0 +1,13 @@
+{application, noiseling,
+ [
+  {description, "noiseling"},
+  {vsn, "1"},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib,
+                  cowboy
+                 ]},
+  {mod, { noiseling_app, []}},
+  {env, []}
+ ]}.

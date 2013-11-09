@@ -7,7 +7,8 @@ init({tcp,http}, Req, []) ->
 	{ok, Req, undefined_state}.
 
 handle(Req, St) ->
-	{ok, [{addr, WsAddress}]} = inet:ifget("wlan0", [addr]),
+	{ok, [[NetworkDevice]]} = init:get_argument(network_device),
+	{ok, [{addr, WsAddress}]} = inet:ifget(NetworkDevice, [addr]),
 	{ok, WsAddressList} = ip4_address_to_binary(WsAddress),
 	erlydtl:compile("./priv/templates/home.dtl", home_template),
 
