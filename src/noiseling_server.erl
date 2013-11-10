@@ -54,8 +54,8 @@ disconnect_listener(StreamPid, ListenerPid) ->
     ok = gen_server:call(?MODULE, {disconnect_listener, StreamPid, ListenerPid}),
     ok.
 
-start_streamer(Stream_name, Lat, Long, Desc) -> 
-    {ok, {streamer, Streamer}} = gen_server:call(?MODULE, {start_streamer, Stream_name, Lat, Long, Desc}),
+start_streamer(StreamName, Lat, Long, Desc) -> 
+    {ok, {streamer, Streamer}} = gen_server:call(?MODULE, {start_streamer, StreamName, Lat, Long, Desc}),
     {ok, {listeners, Listeners}} = gen_server:call(?MODULE, {get_all_listeners}),
     send_data_to_listeners({streamer_added_event, Streamer}, Listeners),
     {ok, {streamer, Streamer}}.
