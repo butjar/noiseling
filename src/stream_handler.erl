@@ -8,7 +8,7 @@ init({tcp,http}, Req, []) ->
 
 handle(Req, St) ->
 	{ok, [[NetworkDevice]]} = init:get_argument(network_device),
-	{ok, [[Port]]} = init:get_argument(port),
+	{ok, [[Port]]} = init:get_argument(ws_port),
 	IpAddress = get_ip_address(NetworkDevice),
 	{ok, WsAddressList} = ip4_address_to_binary(IpAddress),
 
