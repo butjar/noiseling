@@ -1,7 +1,7 @@
 var	rec;
 var	mediaStreamSource;
 var	audioContext;
-var webSockets;
+var webSocket;
 var streaming = false;
 var serverAddress = this.Address;
 
@@ -10,7 +10,7 @@ $(document).ready(function() {
 		event.preventDefault();
 		streamingButtonOnClick();
 	});
-	ws = openWebsockets(init());
+	ws = openWebsocket(init());
 	setInterval(function(){
 		if(streaming){
 			captureAudio();
@@ -26,11 +26,12 @@ var init = function() {
 	audioContext = new AudioContext();
 };
 				
-var openWebsockets = function(callback){
-	webSockets = new WebSocket("ws://" + serverAddress + "/record");
-    webSockets.onopen = function() { callback };
-    webSockets.onmessage = function(e) { handleWebSocketMessage(e.data) };
-	return webSockets;
+var openWebsocket = function(callback){
+	webSocket = new WebSocket("ws://" + location.hostname + ":80/record");
+    webSocket.onopen = function() { callback };
+    webSocket.onmessage = function(e) { handleWebSocketMessage(e.data) };
+    webSocket.onerror = function(e) { console.log("Error on opening Websocket connection:" + e.data) };
+	return webSocket;
 };
 
 var startStream = function(){
@@ -39,7 +40,7 @@ var startStream = function(){
 		$("#submit_streamer_btn").removeClass("btn-primary")
 							   	 .addClass("btn-danger")
 							   	 .text("stop streaming");
-		webSockets.send(getStreamerAsJsonString());
+		webSocket.send(getStreamerAsJsonString());
 	}
 };
 
@@ -48,7 +49,7 @@ var stopStream = function(){
 							 .addClass("btn-primary")
 							 .text("Start streaming");
 	disableFormAndButton();
-	webSockets.send("stop_streamer");
+	webSocket.send("stop_streamer");
 }; 
 
 var onGetUserMediaFailed = function(e) {

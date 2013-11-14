@@ -1,6 +1,6 @@
 var serverAddress = this.Address;
 var audioContext;
-var webSockets;
+var webSocket;
 var streaming = false;
 
 $(document).ready(function(){
@@ -8,11 +8,12 @@ $(document).ready(function(){
 	window.AudioContext = window.AudioContext || window.webkitAudioContext;		
 	audioContext = new AudioContext();
 
-	webSockets = new WebSocket("ws://" + serverAddress + "/receive");
-	webSockets.onopen = function() { 
+	webSocket = new WebSocket("ws://" + location.hostname + ":80/receive");
+	webSocket.onopen = function() { 
 		getStreamers();
 	};
-	webSockets.onmessage = function(e) { handleWebSocketMessage(e.data) } 
+	webSocket.onmessage = function(e) { handleWebSocketMessage(e.data) };
+	webSocket.onerror = function(e) { console.log("Error on opening Websocket connection:" + e.data) };
 });
 
 var handleWebSocketMessage = function(data){
@@ -104,16 +105,16 @@ var pidToId = function(pid){
 };
 
 var getStreamers = function(){
-	webSockets.send("get_streamers");
+	webSocket.send("get_streamers");
 };
 
 var disconectFromStream = function(streamer_pid){
-	webSockets.send("disconnect");
+	webSocket.send("disconnect");
 	streaming = false;
 };
 
 var connectToStream = function(streamer_pid){
-	webSockets.send("{\"connect\" : \"" + streamer_pid + "\"}");
+	webSocket.send("{\"connect\" : \"" + streamer_pid + "\"}");
 	streaming = true;
 };
 
