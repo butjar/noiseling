@@ -11,9 +11,8 @@ handle(Req, St) ->
 	{ok, [[Port]]} = init:get_argument(port),
 	IpAddress = get_ip_address(NetworkDevice),
 	{ok, WsAddressList} = ip4_address_to_binary(IpAddress),
-	erlydtl:compile("./priv/templates/stream.dtl", stream_template),
 
-	{ok,Body} = stream_template:render([
+	{ok,Body} = stream_dtl:render([
 		{ws_address, WsAddressList},
 		{port, Port}
 	]),

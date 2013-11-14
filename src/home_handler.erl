@@ -10,9 +10,8 @@ handle(Req, St) ->
 	{ok, [[NetworkDevice]]} = init:get_argument(network_device),
 	IpAddress = get_ip_address(NetworkDevice),
 	{ok, WsAddressList} = ip4_address_to_binary(IpAddress),
-	erlydtl:compile("./priv/templates/home.dtl", home_template),
 
-	{ok,Body} = home_template:render([
+	{ok,Body} = home_dtl:render([
 		{ws_address, WsAddressList}
 	]),
 
