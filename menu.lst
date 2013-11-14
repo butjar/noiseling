@@ -1,0 +1,5 @@
+default 0
+timeout 0
+title My First Erlang on Xen AMI
+        root (hd0)
+        kernel /boot/vmling -root /erlang -pz /noiseling/ebin -pz /noiseling/deps/cowboy/ebin -pz /noiseling/deps/erlydtl/ebin -pz /noiseling/deps/mimetypes/ebin -pz /noiseling/deps/ranch/ebin -home /noiseling -network_device xe -port 80 -ws_port 80 -dhcp -s noiseling
