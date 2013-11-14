@@ -44,8 +44,8 @@ var handleJsonMessage = function(messageObj){
 var playChunk = function(chunk){
 	var reader = new FileReader();
 	reader.addEventListener("loadend", function() {
- 		var arraybuffer = reader.result;
- 		audioContext.decodeAudioData(arraybuffer, function(buffer) {
+		var arraybuffer = reader.result;
+		audioContext.decodeAudioData(arraybuffer, function(buffer) {
 			audiobuffer = buffer;
 			playSound(audiobuffer);
 		}, onDecodeAudioDataFailed);
@@ -95,8 +95,8 @@ var removeStreamer = function(streamerPid){
 var streamerAsHtml = function(streamer){
 	return '<a href="#" id="'+pidToId(streamer["pid"])+'" class="list-group-item" data-pid="'+streamer["pid"]+'"> \
 		<h4 class="list-group-item-heading">'+streamer["name"]+'@'+streamer["pid"]+'</h4> \
-    	<p class="list-group-item-text">'+streamer["desc"]+'</p> \
-    </a>'
+		<p class="list-group-item-text">'+streamer["desc"]+'</p> \
+	</a>'
 };
 
 var pidToId = function(pid){
