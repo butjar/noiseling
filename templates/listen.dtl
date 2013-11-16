@@ -10,7 +10,7 @@
 		<script src="/js/jquery-migrate-1.2.1.min.js"></script>
 		<link rel="stylesheet" href="/css/bootstrap.min.css">
 		<script type="text/javascript">
-			this.Address = "{{ws_address}}:{{port}}";
+			this.websocketPort = "{{ws_port}}";
 		</script>
 		<script src="/js/receiver.js"></script>
 	</head>

@@ -23,19 +23,24 @@ start(_StartType, _StartArgs) ->
 		{'_', [
 			Static("css"),
 			Static("js"),
-			Static("img"),
     		{"/", home_handler, []},
     		{"/stream", stream_handler, []},
     		{"/listen", listen_handler, []},
     		{"/record", stream_ws_handler, []},
-    		{"/receive", listen_ws_handler, []}		
+    		{"/receive", listen_ws_handler, []}
     	]}
 	]),
-	
+
 	{ok, [[PortString]]} = init:get_argument(port),
 	{Port, _} = string:to_integer(PortString),
+
 	{ok,_} = cowboy:start_http(http, 100,
-		[{port,Port}],
+		[
+			{port,Port},
+			{buffer, 16384},
+			{recbuf, 8192},
+			{sndbuf, 8192}
+		],
 		[{env,[{dispatch,Dispatch}]}]),
 
     noiseling_sup:start_link().
