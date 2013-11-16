@@ -4,6 +4,7 @@ var	audioContext;
 var webSocket;
 var streaming = false;
 var serverAddress = this.Address;
+var websocketPort = this.websocketPort;
 
 $(document).ready(function() {
 	$("#streamer_input_form").submit(function(event){ 
@@ -15,7 +16,7 @@ $(document).ready(function() {
 		if(streaming){
 			captureAudio();
 		};
-	}, 1);
+	}, 1000);
 });
 
 var init = function() {
@@ -27,10 +28,12 @@ var init = function() {
 };
 				
 var openWebsocket = function(callback){
-	webSocket = new WebSocket("ws://" + location.hostname + ":80/record");
+	webSocket = new WebSocket("ws://" + location.hostname + ":" + websocketPort + "/record");
     webSocket.onopen = function() { callback };
     webSocket.onmessage = function(e) { handleWebSocketMessage(e.data) };
-    webSocket.onerror = function(e) { console.log("Error on opening Websocket connection:" + e.data) };
+    webSocket.onerror = function(e) { console.log("Error on opening Websocket connection:");
+									  console.log(e);
+									};
 	return webSocket;
 };
 

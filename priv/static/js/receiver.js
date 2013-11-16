@@ -2,18 +2,21 @@ var serverAddress = this.Address;
 var audioContext;
 var webSocket;
 var streaming = false;
+var websocketPort = this.websocketPort;
 
 $(document).ready(function(){
 	
 	window.AudioContext = window.AudioContext || window.webkitAudioContext;		
 	audioContext = new AudioContext();
 
-	webSocket = new WebSocket("ws://" + location.hostname + ":80/receive");
+	webSocket = new WebSocket("ws://" + location.hostname + ":" + websocketPort + "/receive");
 	webSocket.onopen = function() { 
 		getStreamers();
 	};
 	webSocket.onmessage = function(e) { handleWebSocketMessage(e.data) };
-	webSocket.onerror = function(e) { console.log("Error on opening Websocket connection:" + e.data) };
+	webSocket.onerror = function(e) { console.log("Error on opening Websocket connection:");
+									  console.log(e);
+									};
 });
 
 var handleWebSocketMessage = function(data){
