@@ -3,4 +3,4 @@ ebin
 *.o
 *.beam
 *.plt
-rebar.conf
+erl_crash.dump
