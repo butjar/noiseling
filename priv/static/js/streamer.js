@@ -2,6 +2,11 @@
 // @author Martin Fleischer <butjar@butjar-ThinkPad-X1-Carbon>
 // @copyright (C) 2013, Martin Fleischer
 //-------------------------------------------------------------------
+// see: 
+// http://www.smartjava.org/content/record-audio-using-webrtc-chrome-and-speech-recognition-websockets
+// http://www.html5rocks.com/en/tutorials/webaudio/intro/
+// http://www.html5rocks.com/en/tutorials/getusermedia/intro/
+// https://github.com/mattdiamond/Recorderjs
 var	rec;
 var	mediaStreamSource;
 var	audioContext;
