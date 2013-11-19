@@ -1,3 +1,7 @@
+//-------------------------------------------------------------------
+// @author Martin Fleischer <butjar@butjar-ThinkPad-X1-Carbon>
+// @copyright (C) 2013, Martin Fleischer
+//-------------------------------------------------------------------
 var	rec;
 var	mediaStreamSource;
 var	audioContext;
@@ -6,6 +10,8 @@ var streaming = false;
 var serverAddress = this.Address;
 var websocketPort = this.websocketPort;
 
+// adds functionality for the start stream button opens websockets and
+// starts the loop for audio streaming in an intervall
 $(document).ready(function() {
 	$("#streamer_input_form").submit(function(event){ 
 		event.preventDefault();
@@ -16,9 +22,10 @@ $(document).ready(function() {
 		if(streaming){
 			captureAudio();
 		};
-	}, 1000);
+	}, 1);
 });
 
+// sets getUserMedia for different browsers creates an audio context
 var init = function() {
 	window.URL = window.URL || window.webkitURL;
 	navigator.getUserMedia  = navigator.getUserMedia || navigator.webkitGetUserMedia ||
@@ -26,7 +33,8 @@ var init = function() {
 	window.AudioContext = window.AudioContext || window.webkitAudioContext;
 	audioContext = new AudioContext();
 };
-				
+		
+// opens a websocket and adds its callbacks. returns the websocket.		
 var openWebsocket = function(callback){
 	webSocket = new WebSocket("ws://" + location.hostname + ":" + websocketPort + "/record");
     webSocket.onopen = function() { callback };
@@ -37,6 +45,7 @@ var openWebsocket = function(callback){
 	return webSocket;
 };
 
+// sends start message if the form has valid data
 var startStream = function(){
 	if(isValidForm()){
 		disableFormAndButton();
@@ -47,6 +56,7 @@ var startStream = function(){
 	}
 };
 
+// sends the message for stopping the stream
 var stopStream = function(){
 	$("#submit_streamer_btn").removeClass("btn-danger")
 							 .addClass("btn-primary")
@@ -55,11 +65,13 @@ var stopStream = function(){
 	webSocket.send("stop_streamer");
 }; 
 
+// handles errors when microphone isn't available
 var onGetUserMediaFailed = function(e) {
 	stopStream();
 	alert("Your Browser doesn't support WebRTC");
 };
 
+// uses recorder.js object for recording audio blobs
 var captureAudio = function(){
 	rec.exportWAV(function(blob) {
    	 	ws.send(blob);
@@ -67,6 +79,7 @@ var captureAudio = function(){
 	rec.clear();
 };
 
+// toggles functionality of the button
 var streamingButtonOnClick = function(){
 	if(!streaming){
 		startStream();
@@ -75,6 +88,7 @@ var streamingButtonOnClick = function(){
 	};
 };
 
+// handles messages from the server
 var handleWebSocketMessage = function(message){
 		switch(message){
 		case "streamer_started" : 
@@ -87,6 +101,7 @@ var handleWebSocketMessage = function(message){
 	};
 };
 
+// starts streaming in the client and adjusts the page on client side after server has responded that the stream has started
 var onStreamStarted = function(){
   	navigator.getUserMedia({video: false, audio: true}, function(localMediaStream) {
 	mediaStreamSource = audioContext.createMediaStreamSource(localMediaStream);
@@ -97,6 +112,7 @@ var onStreamStarted = function(){
 	}, onGetUserMediaFailed);
 };
 
+// stops streaming in the client and adjusts the page after server responded that the stream has stopped
 var onStreamStopped = function(){
 	streaming = false;
 	if(rec){
@@ -107,6 +123,7 @@ var onStreamStopped = function(){
 	enableFormAndButton();
 };
 
+// reads fields of the form and creates the start_streamer message
 var getStreamerAsJsonString = function(){
     var stream_name = $("#name_input").val();
     var lat = $("#lat_input").val();
@@ -121,6 +138,7 @@ var getStreamerAsJsonString = function(){
     return JSON.stringify(streamerObj, escapeJsonString);
 };
 
+// validates the form data
 var isValidForm = function(){
 	var bool = true;
 	$(".form-group").removeClass("has-error");
@@ -148,23 +166,27 @@ var isValidForm = function(){
 	return bool;
 };
 
+// enables form and button for input/click
 var enableFormAndButton = function(){
 	$("#streamer_input_fieldset").removeAttr('disabled');
 	$("#submit_streamer_btn").removeAttr('disabled');
 	$("#submit_streamer_btn").prop("disabled",false);;
 };
 
+// disables form and button for input/click
 var disableFormAndButton = function(){
 	$("#streamer_input_fieldset").attr('disabled','');
 	$("#submit_streamer_btn").attr(disabled="disabled")
 	$("#submit_streamer_btn").prop("disabled",true);
 };
 
+// enables button for click
 var enableButton = function(){
 	$("#submit_streamer_btn").removeAttr('disabled');
 	$("#submit_streamer_btn").prop("disabled",false);;
 };
-	
+
+// escapes the JSON string for mochijson2
 var escapeJsonString = function(key, val) {
     if (typeof(val)!="string") return val;
     return val      

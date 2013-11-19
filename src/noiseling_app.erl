@@ -1,3 +1,7 @@
+%%%-------------------------------------------------------------------
+%%% @author Martin Fleischer <butjar@butjar-ThinkPad-X1-Carbon>
+%%% @copyright (C) 2013, Martin Fleischer
+%%%-------------------------------------------------------------------
 -module(noiseling_app).
 
 -behaviour(application).
@@ -8,7 +12,7 @@
 %% ===================================================================
 %% Application callbacks
 %% ===================================================================
-
+%% starts the application
 start(_StartType, _StartArgs) ->
 
 	%found at http://gumzo.de/post/108/
@@ -44,7 +48,7 @@ start(_StartType, _StartArgs) ->
 		[{env,[{dispatch,Dispatch}]}]),
 
     noiseling_sup:start_link().
-
+%% stops the application
 stop(_State) ->
     ok.
 

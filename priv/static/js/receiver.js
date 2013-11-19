@@ -1,9 +1,14 @@
+//-------------------------------------------------------------------
+// @author Martin Fleischer <butjar@butjar-ThinkPad-X1-Carbon>
+// @copyright (C) 2013, Martin Fleischer
+//-------------------------------------------------------------------
 var serverAddress = this.Address;
 var audioContext;
 var webSocket;
 var streaming = false;
 var websocketPort = this.websocketPort;
 
+// sets up audio context and creates a websocket connected to the application
 $(document).ready(function(){
 	
 	window.AudioContext = window.AudioContext || window.webkitAudioContext;		
@@ -19,6 +24,7 @@ $(document).ready(function(){
 									};
 });
 
+// handles messages from the server
 var handleWebSocketMessage = function(data){
 	if(data instanceof Blob){
 			playChunk(data)
@@ -30,6 +36,7 @@ var handleWebSocketMessage = function(data){
 	};
 };
 
+// handles messages in JSON format
 var handleJsonMessage = function(messageObj){
 	var command = Object.keys(messageObj)[0];
 	switch(command){
@@ -45,6 +52,7 @@ var handleJsonMessage = function(messageObj){
 	};
 };
 
+// decodes audio blobs received from the application and plays them
 var playChunk = function(chunk){
 	var reader = new FileReader();
 	reader.addEventListener("loadend", function() {
@@ -57,7 +65,7 @@ var playChunk = function(chunk){
 	reader.readAsArrayBuffer(chunk);
 };
 
-
+// uses audio context for playing an audiobuffer in the browser
 var playSound = function(buffer) {
 	var source = audioContext.createBufferSource();
 	source.buffer = buffer;
@@ -65,10 +73,12 @@ var playSound = function(buffer) {
 	source.start(0);
 };
 
+// handles errors while decoding audio blobs
 var onDecodeAudioDataFailed = function(e){
 	console.log("Error on decoding Audio Data:" + e);
 };
 
+// adds the given list to the streamer view
 var drawStreamers = function(streamers){
 	$('#streamer_list').remove(".list-group-item");
 	for(var i=0; i < streamers.length; i++){
@@ -78,11 +88,13 @@ var drawStreamers = function(streamers){
 	defineStreamersOnClickEvent();
 };
 
+// adds a single streamer to the view
 var addStreamer = function(streamer){
 	$('#streamer_list').append(streamerAsHtml(streamer));
 	defineStreamersOnClickEvent();
 };
 
+// on click callback for streamer items in the view
 var defineStreamersOnClickEvent = function(){
 	$(".list-group-item").click(function(){
 		$('.active').removeClass("active");
@@ -91,11 +103,13 @@ var defineStreamersOnClickEvent = function(){
 	});
 };
 
+// removes a single streamer from the view
 var removeStreamer = function(streamerPid){
 	var selector = '"#'+ pidToId(streamerPid) +'"';
 	$('#' + pidToId(streamerPid)).remove();
 };
 
+// returns the stramer as html String
 var streamerAsHtml = function(streamer){
 	return '<a href="#" id="'+pidToId(streamer["pid"])+'" class="list-group-item" data-pid="'+streamer["pid"]+'"> \
 		<h4 class="list-group-item-heading">'+streamer["name"]+'@'+streamer["pid"]+'</h4> \
@@ -103,24 +117,29 @@ var streamerAsHtml = function(streamer){
 	</a>'
 };
 
+// decodes given pid for use as html element id
 var pidToId = function(pid){
 	return pid.replace(/\</g, "").replace(/\./g, "_").replace(/\>/g, "");
 };
 
+// sends the get_streamers message to the server
 var getStreamers = function(){
 	webSocket.send("get_streamers");
 };
 
+// sends the disconnect message to the server
 var disconectFromStream = function(streamer_pid){
 	webSocket.send("disconnect");
 	streaming = false;
 };
 
+// sends connect message to the server
 var connectToStream = function(streamer_pid){
 	webSocket.send("{\"connect\" : \"" + streamer_pid + "\"}");
 	streaming = true;
 };
 
+// validates if give string has the JSON format
 var isJsonString = function(data){
 	try{
 		JSON.parse(data);

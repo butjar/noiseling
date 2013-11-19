@@ -1,10 +1,6 @@
 %%%-------------------------------------------------------------------
 %%% @author Martin Fleischer <butjar@butjar-ThinkPad-X1-Carbon>
 %%% @copyright (C) 2013, Martin Fleischer
-%%% @doc
-%%%
-%%% @end
-%%% Created : 15 Aug 2013 by Martin Fleischer <butjar@butjar-ThinkPad-X1-Carbon>
 %%%-------------------------------------------------------------------
 -module(noiseling_server).
 
@@ -20,7 +16,7 @@
     terminate/2, code_change/3]).
 
 -define(SERVER, ?MODULE). 
-
+%% streamer record defines an output-stream
 -record(streamer, {
 			pid,
 			connected_listeners = [],
@@ -29,7 +25,7 @@
 			long,
 			desc
 		}).
-
+%% state of the server
 -record(state, {
 			streamers = [],
 			listeners = []
@@ -38,34 +34,42 @@
 %%%===================================================================
 %%% API
 %%%===================================================================
+%% Returns all streamers of the application bound to Stramers in the tuple {ok, {streamers, Streamers}}.
 get_streamers() ->
 	{ok, {streamers, Streamers}} = gen_server:call(?MODULE, {get_streamers}),
 	{ok, {streamers, Streamers}}.
 
+%% Connects the listener with ListenerPid to the stream with StreamPid. Returns ok.
 connect_listener(StreamPid, ListenerPid) -> 
 	ok = gen_server:call(?MODULE, {connect_listener, StreamPid, ListenerPid}),
 	ok.
 
+%% Disconnects the listener with pid ListenerPid from the stream with pid StreamPid. Returns ok.
 disconnect_listener(StreamPid, ListenerPid) ->
 	ok = gen_server:call(?MODULE, {disconnect_listener, StreamPid, ListenerPid}),
 	ok.
 
+%% Starts a stream with the given Attributs and returns the created stream 
+%% Streamer as streamer-Record in the tuple {ok, {streamer, Streamer}}.
 start_streamer(StreamName, Lat, Long, Desc) -> 
 	{ok, {streamer, Streamer}} = gen_server:call(?MODULE, {start_streamer, StreamName, Lat, Long, Desc}),
 	{ok, {listeners, Listeners}} = gen_server:call(?MODULE, {get_all_listeners}),
 	send_data_to_listeners({streamer_added_event, Streamer}, Listeners),
 	{ok, {streamer, Streamer}}.
 
+%% Ends stream with pid StreamPid.
 kill_streamer(StreamPid) -> 
 	ok = gen_server:call(?MODULE, {kill_streamer, StreamPid}),
 	{ok, {listeners, Listeners}} = gen_server:call(?MODULE, {get_all_listeners}),
 	send_data_to_listeners({streamer_removed_event, StreamPid}, Listeners),
 	ok.
 
+%% Adds the listener with pid ListenerPid to the server state.
 add_listener(ListenerPid) -> 
 	ok = gen_server:call(?MODULE, {add_listener, ListenerPid}),
 	ok.
 
+%% Removes the listener with pid ListenerPid from the server state.
 remove_listener(ListenerPid) ->
 	ok = gen_server:call(?MODULE, {remove_listener, ListenerPid}),
 	ok.
@@ -114,12 +118,16 @@ init([]) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
+%% Adds a new stream with given attributes to the state.
+%% Replys the stream Streamer as streamer-Record in the tuple {ok, {streamer, Streamer}.
 handle_call({start_streamer, StreamName, Lat, Long, Desc}, _From, State) ->
 	StreamPid = spawn(fun() -> stream_data_loop() end),
 	Streamer = #streamer{pid=StreamPid, stream_name=StreamName, lat=Lat, long=Long, desc=Desc},
 	NewState = State#state{streamers = State#state.streamers ++ [ Streamer ]},
 	{reply, {ok, {streamer, Streamer}}, NewState};
 
+%% Removes the streamer with pid StreamerPid from the state.
+%% Replys ok.
 handle_call({kill_streamer, StreamerPid}, _From, State) ->
 	case lists:keyfind(StreamerPid, 2, State#state.streamers) of
 		false -> {reply, ok, State};
@@ -129,14 +137,18 @@ handle_call({kill_streamer, StreamerPid}, _From, State) ->
 			StreamerPid ! shutdown,
 			{reply, ok, NewState}
 	end;
+%% Adds the listener with pid ListenerPid to the state.
+%% Replys ok.
 handle_call({add_listener, ListenerPid}, _From, State) ->
 	NewState = State#state{listeners = State#state.listeners ++ [ ListenerPid ]},
 	{reply, ok, NewState};
-
+%% Removes the listener with pid ListenerPid from the state.
+%% Replys ok.
 handle_call({remove_listener, ListenerPid}, _From, State) ->
 	NewState = State#state{listeners = State#state.listeners -- [ ListenerPid ]},
 	{reply, ok, NewState};
-
+%% Connects the listener with pid ListenerPid to the stream with pid StreamerPid.
+%% Replys ok.
 handle_call({connect_listener, StreamerPid, ListenerPid}, _From, State) ->
     case lists:keyfind(StreamerPid, 2, State#state.streamers) of
         false -> {reply, ok, State};
@@ -147,6 +159,8 @@ handle_call({connect_listener, StreamerPid, ListenerPid}, _From, State) ->
             NewState = State#state{streamers = NewStreamers},
             {reply, ok, NewState}
     end;
+%% Disconnects the listener with pid ListenerPid from the stream with pid StreamerPid.
+%% Replys ok.
 handle_call({disconnect_listener, StreamerPid, ListenerPid}, _From, State) ->
     case lists:keyfind(StreamerPid, 2, State#state.streamers) of
         false -> {reply, ok, State};
@@ -156,6 +170,8 @@ handle_call({disconnect_listener, StreamerPid, ListenerPid}, _From, State) ->
             NewState = State#state{streamers = NewStreamers},
             {reply, ok, NewState}
     end;
+%% Returns the list Listeners containing all listeners of the stream with pid StreamerPid.
+%% Replys {ok, {listeners, Listeners}.
 handle_call({get_connected_listeners, StreamerPid}, _From, State) ->
 	case lists:keyfind(StreamerPid, 2, State#state.streamers) of
 		false ->
@@ -164,10 +180,13 @@ handle_call({get_connected_listeners, StreamerPid}, _From, State) ->
 			Listeners = Streamer#streamer.connected_listeners,
 			{reply, {ok, {listeners, Listeners}}, State}
 	end;
+%% Returns the list Listeners containing all listeners of the server state.
+%% Replys {ok, {listeners, Listeners}}.
 handle_call({get_all_listeners}, _From, State) ->
 	Listeners = State#state.listeners,
 	{reply, {ok, {listeners, Listeners}}, State};
-
+%% Returns the list Streamers containing all streamers of the server state.
+%% Replys {ok, {streamers, Streamers}}.
 handle_call({get_streamers}, _From, State) ->
 	Streamers = State#state.streamers,
 	{reply, {ok, {streamers, Streamers}}, State}.
@@ -225,9 +244,12 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
+%% sends Data to all Prozesses of the list Listeners
 send_data_to_listeners(Data, Listeners) ->
 	lists:foreach(fun(Pid)-> Pid ! Data end, Listeners).
 
+%% infinite streaming loop takes audio chunks and sends it to the connected listeners of its stream 
+%% or a shutdown message for killing itself
 stream_data_loop() ->
 	receive
 		shutdown ->
@@ -243,6 +265,8 @@ stream_data_loop() ->
 			end
 	end.
 
+%% returns the list listeners containing all listeners of the stream with pid StreamPid 
+%% in the tuple {ok, {connected_listeners, Listeners}}
 get_connected_listeners(StreamPid) ->
 	{ok, {listeners, Listeners}} = gen_server:call(?MODULE, {get_connected_listeners, StreamPid}),
 	{ok, {connected_listeners, Listeners}}.
