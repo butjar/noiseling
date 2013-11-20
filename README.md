@@ -30,7 +30,7 @@ $ sudo umount tmp
 $ rm -R tmp
 </pre></code>
 
-Now you can upload the AMI to EC2 
+Now you can upload the AMI to EC2. 
 Be sure to have your ec2 command line tools set up 
 http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/SettingUp_CommandLine.html
 <pre><code>$ mkdir tmp
